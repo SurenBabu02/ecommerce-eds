@@ -1,6 +1,12 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
 const categoryLabels = new Set(['electronics', 'fashion', 'footwear', 'accessories']);
+const categoryPaths = {
+  electronics: '/category/electronics',
+  fashion: '/category/fashion',
+  footwear: '/category/footwear',
+  accessories: '/category/accessories',
+};
 
 function getRowLabel(row) {
   return [...row.children]
@@ -18,7 +24,16 @@ function isCategoryCards(block) {
   const labels = rows.map(getRowLabel);
   return labels.every((label) => categoryLabels.has(label))
     && new Set(labels).size === categoryLabels.size
-    && rows.every((row) => row.querySelectorAll('picture').length === 1 && !row.querySelector('a, button'));
+    && rows.every((row, index) => {
+      const links = [...row.querySelectorAll('a')];
+      return row.querySelectorAll('picture').length === 1
+        && !row.querySelector('button')
+        && links.length <= 1
+        && (!links.length || (
+          links[0].querySelector('picture')
+          && [categoryPaths[labels[index]], `/${labels[index]}`].includes(links[0].getAttribute('href'))
+        ));
+    });
 }
 
 function isDealsCards(block) {
@@ -34,12 +49,26 @@ export default function decorate(block) {
   /* change to ul, li */
   const ul = document.createElement('ul');
   [...block.children].forEach((row) => {
+    const categoryLabel = block.classList.contains('categories') ? getRowLabel(row) : '';
     const li = document.createElement('li');
     while (row.firstElementChild) li.append(row.firstElementChild);
     [...li.children].forEach((div) => {
       if (div.children.length === 1 && div.querySelector('picture')) div.className = 'cards-card-image';
       else div.className = 'cards-card-body';
     });
+    if (block.classList.contains('categories')) {
+      const image = li.querySelector('.cards-card-image');
+      const body = li.querySelector('.cards-card-body');
+      const imageLink = image.querySelector('a');
+      const picture = image.querySelector('picture');
+      const link = document.createElement('a');
+      link.className = 'cards-category-link';
+      link.href = imageLink?.getAttribute('href') || categoryPaths[categoryLabel];
+      link.setAttribute('aria-label', body.textContent.trim());
+      image.replaceChildren(picture);
+      link.append(image, body);
+      li.replaceChildren(link);
+    }
     ul.append(li);
   });
   ul.querySelectorAll('picture > img').forEach((img) => img.closest('picture').replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }])));

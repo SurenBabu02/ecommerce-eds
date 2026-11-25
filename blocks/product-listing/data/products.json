@@ -1,0 +1,98 @@
+{
+  "pageSize": 4,
+  "productImage": "/blocks/product-listing/images/product-placeholder.svg",
+  "categories": {
+    "electronics": {
+      "title": "Electronics",
+      "description": "Explore the latest in electronics from top brands.",
+      "heroImage": "/media_141c3a23a2cbc54c837d21b59a73e06649eb9d3e0.jpg?width=750&format=webply&optimize=medium",
+      "filterCategories": ["Laptops", "Mobiles", "Accessories"],
+      "brands": ["Apple", "Samsung", "Dell", "HP"],
+      "priceRanges": [
+        { "value": "0-100", "label": "$0 - $100", "min": 0, "max": 100 },
+        { "value": "100-500", "label": "$100 - $500", "min": 100, "max": 500 },
+        { "value": "500-1000", "label": "$500 - $1000", "min": 500, "max": 1000 },
+        { "value": "1000-plus", "label": "$1000+", "min": 1000, "max": null }
+      ],
+      "products": [
+        { "id": "elec-001", "name": "MacBook Air 13", "brand": "Apple", "category": "Laptops", "price": 999, "featured": 1 },
+        { "id": "elec-002", "name": "Galaxy Book4", "brand": "Samsung", "category": "Laptops", "price": 899, "featured": 2 },
+        { "id": "elec-003", "name": "Inspiron 15", "brand": "Dell", "category": "Laptops", "price": 699, "featured": 3 },
+        { "id": "elec-004", "name": "Pavilion x360", "brand": "HP", "category": "Laptops", "price": 749, "featured": 4 },
+        { "id": "elec-005", "name": "iPhone 15", "brand": "Apple", "category": "Mobiles", "price": 799, "featured": 5 },
+        { "id": "elec-006", "name": "Galaxy A55", "brand": "Samsung", "category": "Mobiles", "price": 449, "featured": 6 },
+        { "id": "elec-007", "name": "USB-C Hub", "brand": "Dell", "category": "Accessories", "price": 49, "featured": 7 },
+        { "id": "elec-008", "name": "Wireless Mouse", "brand": "HP", "category": "Accessories", "price": 29, "featured": 8 }
+      ]
+    },
+    "fashion": {
+      "title": "Fashion",
+      "description": "Find everyday styles and new-season fashion.",
+      "heroImage": "/media_1483a8f35c8516aaebe56f3b3f2d156c582c43023.jpg?width=750&format=webply&optimize=medium",
+      "filterCategories": ["Clothing", "Shoes", "Accessories"],
+      "brands": ["Levi's", "H&M", "Nike", "Adidas"],
+      "priceRanges": [
+        { "value": "0-50", "label": "$0 - $50", "min": 0, "max": 50 },
+        { "value": "50-100", "label": "$50 - $100", "min": 50, "max": 100 },
+        { "value": "100-200", "label": "$100 - $200", "min": 100, "max": 200 },
+        { "value": "200-plus", "label": "$200+", "min": 200, "max": null }
+      ],
+      "products": [
+        { "id": "fash-001", "name": "Classic Denim Jacket", "brand": "Levi's", "category": "Clothing", "price": 89, "featured": 1 },
+        { "id": "fash-002", "name": "Everyday Cotton Tee", "brand": "H&M", "category": "Clothing", "price": 24, "featured": 2 },
+        { "id": "fash-003", "name": "Relaxed Fit Jeans", "brand": "Levi's", "category": "Clothing", "price": 79, "featured": 3 },
+        { "id": "fash-004", "name": "Lightweight Hoodie", "brand": "Adidas", "category": "Clothing", "price": 65, "featured": 4 },
+        { "id": "fash-005", "name": "Court Sneakers", "brand": "Nike", "category": "Shoes", "price": 95, "featured": 5 },
+        { "id": "fash-006", "name": "Street Runner", "brand": "Adidas", "category": "Shoes", "price": 110, "featured": 6 },
+        { "id": "fash-007", "name": "Canvas Tote Bag", "brand": "H&M", "category": "Accessories", "price": 19, "featured": 7 },
+        { "id": "fash-008", "name": "Leather Belt", "brand": "Levi's", "category": "Accessories", "price": 35, "featured": 8 }
+      ]
+    },
+    "footwear": {
+      "title": "Footwear",
+      "description": "Step into new everyday and performance footwear.",
+      "heroImage": "/media_163a164a32c17eb1c8ac5fd42ffa5d2d1d1a0cae4.jpg?width=750&format=webply&optimize=medium",
+      "filterCategories": ["Sneakers", "Sports Shoes", "Casual Shoes"],
+      "brands": ["HRX", "PUMA", "Adidas", "Nike"],
+      "priceRanges": [
+        { "value": "0-50", "label": "$0 - $50", "min": 0, "max": 50 },
+        { "value": "50-100", "label": "$50 - $100", "min": 50, "max": 100 },
+        { "value": "100-150", "label": "$100 - $150", "min": 100, "max": 150 },
+        { "value": "150-plus", "label": "$150+", "min": 150, "max": null }
+      ],
+      "products": [
+        { "id": "foot-001", "name": "Everyday Runner", "brand": "HRX", "category": "Sports Shoes", "price": 69, "featured": 1 },
+        { "id": "foot-002", "name": "Court Classic", "brand": "PUMA", "category": "Sneakers", "price": 79, "featured": 2 },
+        { "id": "foot-003", "name": "Ultralight Trainer", "brand": "Adidas", "category": "Sports Shoes", "price": 119, "featured": 3 },
+        { "id": "foot-004", "name": "Street Low Top", "brand": "Nike", "category": "Sneakers", "price": 99, "featured": 4 },
+        { "id": "foot-005", "name": "Flex Walk", "brand": "HRX", "category": "Casual Shoes", "price": 49, "featured": 5 },
+        { "id": "foot-006", "name": "Velocity Pro", "brand": "PUMA", "category": "Sports Shoes", "price": 145, "featured": 6 },
+        { "id": "foot-007", "name": "Daily Canvas", "brand": "Adidas", "category": "Casual Shoes", "price": 59, "featured": 7 },
+        { "id": "foot-008", "name": "Air Motion", "brand": "Nike", "category": "Sports Shoes", "price": 160, "featured": 8 }
+      ]
+    },
+    "accessories": {
+      "title": "Accessories",
+      "description": "Complete your look with useful everyday accessories.",
+      "heroImage": "/media_1ef4cbfcb9e8401dc78dff5d8ad8fa916cfa58ee0.jpg?width=750&format=webply&optimize=medium",
+      "filterCategories": ["Bags", "Watches", "Audio", "Sunglasses"],
+      "brands": ["Skybags", "Fastrack", "boAt", "PUMA"],
+      "priceRanges": [
+        { "value": "0-50", "label": "$0 - $50", "min": 0, "max": 50 },
+        { "value": "50-100", "label": "$50 - $100", "min": 50, "max": 100 },
+        { "value": "100-200", "label": "$100 - $200", "min": 100, "max": 200 },
+        { "value": "200-plus", "label": "$200+", "min": 200, "max": null }
+      ],
+      "products": [
+        { "id": "acc-001", "name": "Classic Daypack", "brand": "Skybags", "category": "Bags", "price": 45, "featured": 1 },
+        { "id": "acc-002", "name": "Analog Everyday Watch", "brand": "Fastrack", "category": "Watches", "price": 89, "featured": 2 },
+        { "id": "acc-003", "name": "Wireless Earbuds", "brand": "boAt", "category": "Audio", "price": 59, "featured": 3 },
+        { "id": "acc-004", "name": "Sport Sunglasses", "brand": "PUMA", "category": "Sunglasses", "price": 39, "featured": 4 },
+        { "id": "acc-005", "name": "Travel Backpack", "brand": "Skybags", "category": "Bags", "price": 129, "featured": 5 },
+        { "id": "acc-006", "name": "Minimal Dial Watch", "brand": "Fastrack", "category": "Watches", "price": 149, "featured": 6 },
+        { "id": "acc-007", "name": "Bluetooth Headphones", "brand": "boAt", "category": "Audio", "price": 99, "featured": 7 },
+        { "id": "acc-008", "name": "Classic Aviators", "brand": "PUMA", "category": "Sunglasses", "price": 79, "featured": 8 }
+      ]
+    }
+  }
+}

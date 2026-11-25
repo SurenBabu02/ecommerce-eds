@@ -17,7 +17,7 @@
   <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
   <script nonce="aem" type="module">
     window.addEventListener('load', () => {
-      if (document.referrer) {
+      if (document.referrer && !window.isCategoryListing) {
         const { origin, pathname } = new URL(document.referrer);
         if (origin === window.location.origin) {
           const backBtn = document.createElement('a');
@@ -67,6 +67,26 @@
       </p>
     </div>
   </main>
+  <script nonce="aem">
+    const categorySlugs = new Set(['electronics', 'fashion', 'footwear', 'accessories']);
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const categorySlug = pathSegments.length === 2 && pathSegments[0] === 'category'
+      ? pathSegments[1].toLowerCase()
+      : '';
+    if (categorySlugs.has(categorySlug)) {
+      window.isCategoryListing = true;
+      const main = document.querySelector('main');
+      const section = document.createElement('div');
+      const productListing = document.createElement('div');
+      const row = document.createElement('div');
+      productListing.className = 'product-listing';
+      row.append(document.createElement('div'));
+      productListing.append(row);
+      section.append(productListing);
+      main.classList.remove('error');
+      main.replaceChildren(section);
+    }
+  </script>
   <footer></footer>
 </body>
 
