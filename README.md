@@ -7,7 +7,7 @@ A mobile-first commerce storefront built with Edge Delivery Services and Documen
 The page content is managed in Document Authoring. Build the home page from these authored sections:
 
 1. A `hero` block with a background image, headline, short supporting copy, and primary link.
-2. A `cards categories` block with one image and category name per card.
+2. A `cards` block with four rows, each containing one image and a short category name. This shape is automatically decorated as a category grid; the `categories` variation can also be added explicitly.
 3. A `cards products` block with product image, name, price, and a primary action per card.
 4. An optional `hero promotion` block for a campaign banner.
 
