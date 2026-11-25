@@ -1,4 +1,4 @@
-import { getMetadata } from '../../scripts/aem.js';
+import { decorateIcons, getMetadata } from '../../scripts/aem.js';
 import { loadFragment } from '../fragment/fragment.js';
 
 // media query match that indicates mobile/tablet width
@@ -86,6 +86,57 @@ function toggleMenu(nav, navSections, forceExpanded = null) {
   }
 }
 
+function createToolLink(name, label, href) {
+  const link = document.createElement('a');
+  link.className = `nav-tool-link nav-tool-${name}`;
+  link.href = href;
+  link.setAttribute('aria-label', label);
+
+  const icon = document.createElement('span');
+  icon.className = `icon icon-${name}`;
+  link.append(icon);
+
+  const linkLabel = document.createElement('span');
+  linkLabel.className = 'nav-tool-label';
+  linkLabel.textContent = label;
+  link.append(linkLabel);
+  return link;
+}
+
+function decorateNavTools(nav) {
+  let tools = nav.querySelector('.nav-tools');
+  if (!tools) {
+    tools = document.createElement('div');
+    tools.className = 'nav-tools';
+    nav.append(tools);
+  }
+
+  const content = tools.querySelector('.default-content-wrapper') || tools;
+  const searchIcon = tools.querySelector('.icon-search');
+  if (searchIcon) {
+    let searchLink = searchIcon.closest('a');
+    if (!searchLink) {
+      searchLink = createToolLink('search', 'Search', '/search');
+      searchIcon.parentElement.replaceChild(searchLink, searchIcon);
+      searchLink.querySelector('.icon').replaceWith(searchIcon);
+    } else {
+      searchLink.classList.add('nav-tool-link', 'nav-tool-search');
+      searchLink.setAttribute('aria-label', 'Search');
+    }
+  } else {
+    content.append(createToolLink('search', 'Search', '/search'));
+  }
+
+  ['account', 'cart'].forEach((name) => {
+    if (!tools.querySelector(`.nav-tool-${name}`)) {
+      const label = name === 'account' ? 'My account' : 'Cart';
+      content.append(createToolLink(name, label, `/${name}`));
+    }
+  });
+
+  decorateIcons(tools);
+}
+
 /**
  * loads and decorates the header, mainly the nav
  * @param {Element} block The header block element
@@ -109,11 +160,14 @@ export default async function decorate(block) {
   });
 
   const navBrand = nav.querySelector('.nav-brand');
-  const brandLink = navBrand.querySelector('.button');
+  const brandLink = navBrand && navBrand.querySelector('.button');
   if (brandLink) {
     brandLink.className = '';
-    brandLink.closest('.button-container').className = '';
+    const buttonContainer = brandLink.closest('.button-container');
+    if (buttonContainer) buttonContainer.className = '';
   }
+
+  decorateNavTools(nav);
 
   const navSections = nav.querySelector('.nav-sections');
   if (navSections) {

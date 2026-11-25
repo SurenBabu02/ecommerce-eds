@@ -3,17 +3,20 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(257px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
 }
 
 .cards > ul > li {
-  border: 1px solid #dadada;
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   background-color: var(--background-color);
+  overflow: hidden;
 }
 
 .cards .cards-card-body {
-  margin: 16px;
+  margin: 12px;
 }
 
 .cards .cards-card-image {
@@ -24,4 +27,106 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
+}
+
+.cards.products > ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cards.products > ul > li {
+  display: flex;
+  flex-direction: column;
+}
+
+.cards.products .cards-card-image {
+  background-color: var(--surface-color);
+}
+
+.cards.products > ul > li img {
+  aspect-ratio: 1;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.cards.products .cards-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px;
+}
+
+.cards.products .cards-card-body p {
+  margin: 0;
+}
+
+.cards.products .cards-card-body .button-wrapper {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.cards.products .cards-card-body .button {
+  width: 100%;
+  font-size: var(--body-font-size-xs);
+}
+
+.cards.categories > ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cards.categories > ul > li {
+  display: flex;
+  align-items: center;
+  min-height: 68px;
+  border: 0;
+  background-color: #eaf4fb;
+}
+
+.cards.categories > ul > li:nth-child(4n + 2) {
+  background-color: #fff0ec;
+}
+
+.cards.categories > ul > li:nth-child(4n + 3) {
+  background-color: #f0edfb;
+}
+
+.cards.categories > ul > li:nth-child(4n) {
+  background-color: #fdf5db;
+}
+
+.cards.categories .cards-card-image {
+  flex: 0 0 56px;
+  width: 56px;
+  margin-left: 8px;
+}
+
+.cards.categories > ul > li img {
+  aspect-ratio: 1;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.cards.categories .cards-card-body {
+  margin: 8px;
+  font-size: var(--body-font-size-xs);
+  font-weight: 500;
+}
+
+.cards.categories .cards-card-body p {
+  margin: 0;
+}
+
+@media (width >= 640px) {
+  .cards.categories > ul {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cards.products > ul {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
 }

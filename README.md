@@ -1,5 +1,17 @@
-# Your Project's Title...
-Your project's description...
+# Ecommerce EDS storefront
+
+A mobile-first commerce storefront built with Edge Delivery Services and Document Authoring.
+
+## Commerce home page authoring
+
+The page content is managed in Document Authoring. Build the home page from these authored sections:
+
+1. A `hero` block with a background image, headline, short supporting copy, and primary link.
+2. A `cards categories` block with one image and category name per card.
+3. A `cards products` block with product image, name, price, and a primary action per card.
+4. An optional `hero promotion` block for a campaign banner.
+
+The `/nav` document supplies the brand and navigation links (for example, Shop, Deals, About, and Help). Header search, account, and cart controls are added by the header block; account and cart pages can be authored at `/account` and `/cart`.
 
 ## Environments
 - Preview: https://main--ecommerce-eds--SurenBabu02.aem.page/
