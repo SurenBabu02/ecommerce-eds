@@ -1,4 +1,5 @@
 import { addToCart as addProductToCart } from '../../scripts/cart.js';
+import { getWishlist, toggleWishlist } from '../../scripts/account.js';
 
 function createElement(tagName, className, text) {
   const element = document.createElement(tagName);
@@ -70,10 +71,48 @@ function createProductCard(product, imagePath, cartStatus) {
   const addButton = createElement('button', 'product-listing-add-button', 'Add to Cart');
   addButton.type = 'button';
   addButton.addEventListener('click', () => addToCart(product, cartStatus));
+  const wishlistButton = createElement('button', 'product-listing-wishlist-button', '♡ Add to Wishlist');
+  wishlistButton.type = 'button';
+  wishlistButton.setAttribute('aria-pressed', 'false');
+  const wishlistStatus = createElement('p', 'product-listing-wishlist-status');
+  wishlistStatus.setAttribute('role', 'status');
+  wishlistStatus.setAttribute('aria-live', 'polite');
+  const updateWishlistButton = (isSaved) => {
+    wishlistButton.setAttribute('aria-pressed', String(isSaved));
+    wishlistButton.textContent = isSaved ? '♥ Added to Wishlist' : '♡ Add to Wishlist';
+  };
+  try {
+    const isSaved = getWishlist().some(
+      (savedProduct) => savedProduct.id === String(product.id),
+    );
+    updateWishlistButton(isSaved);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Unable to read wishlist.', error);
+    wishlistButton.disabled = true;
+    wishlistStatus.textContent = 'Wishlist is unavailable right now.';
+  }
+  wishlistButton.addEventListener('click', () => {
+    try {
+      const isSaved = toggleWishlist({
+        ...product,
+        title: product.name,
+        image: imagePath,
+      });
+      updateWishlistButton(isSaved);
+      wishlistStatus.textContent = isSaved
+        ? `${product.name} saved to your wishlist.`
+        : `${product.name} removed from your wishlist.`;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Unable to update wishlist.', error);
+      wishlistStatus.textContent = 'Unable to update your wishlist.';
+    }
+  });
   details.append(name, meta, price);
   productLink.append(imageWrapper, details);
   const actions = createElement('div', 'product-listing-card-actions');
-  actions.append(addButton);
+  actions.append(addButton, wishlistButton, wishlistStatus);
   card.append(productLink, actions);
   item.append(card);
   return item;
