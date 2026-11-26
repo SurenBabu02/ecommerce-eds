@@ -112,6 +112,100 @@ function matchesSelectedPrice(product, selectedRanges, priceRanges) {
     && (range.max === null || product.price < range.max));
 }
 
+async function fetchSheetPage(sheetUrl, offset) {
+  const pageUrl = new URL(sheetUrl);
+  pageUrl.searchParams.set('offset', String(offset));
+  const response = await fetch(pageUrl);
+  if (!response.ok) {
+    throw new Error(`Product sheet request failed with status ${response.status}.`);
+  }
+
+  const page = await response.json();
+  if (!page || typeof page !== 'object' || Array.isArray(page)) {
+    throw new Error('The product sheet returned an invalid response.');
+  }
+  const total = Number(page.total);
+  const limit = Number(page.limit);
+  const pageOffset = Number(page.offset);
+  if (!Array.isArray(page.data)
+    || !Number.isSafeInteger(total)
+    || total < 0
+    || !Number.isSafeInteger(limit)
+    || limit < 1
+    || pageOffset !== offset
+    || page.data.length > limit) {
+    throw new Error('The product sheet returned an invalid page.');
+  }
+
+  return { data: page.data, total, limit };
+}
+
+async function fetchAllSheetProducts(sheetUrl, assetBaseUrl) {
+  const products = [];
+  let offset = 0;
+  let total;
+
+  do {
+    const page = await fetchSheetPage(sheetUrl, offset);
+    if (total !== undefined && page.total !== total) {
+      throw new Error('The product sheet changed while its pages were being loaded.');
+    }
+    total = page.total;
+    if (page.data.length === 0 && products.length < total) {
+      throw new Error('The product sheet returned no rows before its reported total.');
+    }
+    products.push(...page.data);
+    offset += page.data.length;
+  } while (products.length < total);
+
+  if (products.length !== total) {
+    throw new Error('The product sheet row count does not match its reported total.');
+  }
+
+  const populatedRows = products.map((row, index) => ({ row, index }))
+    .filter(({ row, index }) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        throw new Error(`Product sheet row ${index + 1} is invalid.`);
+      }
+      return Object.values(row).some((value) => (
+        value !== null && value !== undefined && String(value).trim() !== ''
+      ));
+    });
+
+  const ids = new Set();
+  return populatedRows.map(({ row, index }) => {
+    const id = String(row.id || '').trim();
+    const categorySlug = String(row.categorySlug || '').trim().toLowerCase();
+    const name = String(row.title || '').trim();
+    const brand = String(row.brand || '').trim();
+    const category = String(row.category || '').trim();
+    const price = Number(String(row.price || '').replace(/,/g, ''));
+    const featured = row.featured === undefined || row.featured === ''
+      ? index + 1
+      : Number(row.featured);
+    const imagePath = String(row.image || '').trim();
+
+    if (!id || !categorySlug || !name || !brand || !category
+      || !Number.isFinite(price) || price < 0 || !Number.isFinite(featured)) {
+      throw new Error(`Product sheet row ${index + 1} is missing valid product fields.`);
+    }
+    if (ids.has(id)) throw new Error(`Duplicate product ID "${id}" in product sheet.`);
+    ids.add(id);
+
+    return {
+      id,
+      categorySlug,
+      name,
+      description: String(row.description || '').trim(),
+      brand,
+      category,
+      price,
+      featured,
+      image: imagePath ? new URL(imagePath, assetBaseUrl).href : '',
+    };
+  });
+}
+
 function sortProducts(products, sortOrder) {
   const sorted = [...products];
   if (sortOrder === 'price-asc') sorted.sort((a, b) => a.price - b.price);
@@ -171,9 +265,11 @@ function buildPage(category, catalogue) {
   const filters = createElement('aside', 'product-listing-filters');
   filters.setAttribute('aria-label', 'Filter products');
   filters.append(createElement('h2', 'product-listing-filters-title', 'Filter By'));
+  const filterCategories = [...new Set(category.products.map((product) => product.category))];
+  const brands = [...new Set(category.products.map((product) => product.brand))];
   filters.append(
-    createFilterGroup('Category', 'category', category.filterCategories),
-    createFilterGroup('Brand', 'brand', category.brands),
+    createFilterGroup('Category', 'category', filterCategories),
+    createFilterGroup('Brand', 'brand', brands),
     createFilterGroup('Price Range', 'price', category.priceRanges),
   );
 
@@ -211,7 +307,11 @@ function buildPage(category, catalogue) {
     resultCount.textContent = `${filtered.length} products`;
     products.replaceChildren();
     visibleProducts.forEach((product) => {
-      products.append(createProductCard(product, catalogue.productImage, cartStatus));
+      products.append(createProductCard(
+        product,
+        product.image || catalogue.productImage,
+        cartStatus,
+      ));
     });
     if (filtered.length === 0) {
       products.append(createElement('li', 'product-listing-empty', 'No products match these filters.'));
@@ -235,21 +335,47 @@ function buildPage(category, catalogue) {
 }
 
 export default async function decorate(block) {
+  const sourceLink = [...block.querySelectorAll('a[href]')]
+    .find((link) => new URL(link.href).pathname.toLowerCase().endsWith('.json'));
+  const linkedSheetUrl = sourceLink ? new URL(sourceLink.href) : null;
+  const isHttpSheetUrl = linkedSheetUrl && ['http:', 'https:'].includes(linkedSheetUrl.protocol);
+  const sheetUrl = isHttpSheetUrl
+    ? new URL(`${linkedSheetUrl.pathname}${linkedSheetUrl.search}`, window.location.origin)
+    : null;
+  const assetBaseUrl = isHttpSheetUrl ? new URL('/', linkedSheetUrl) : null;
   const loading = createElement('p', 'product-listing-loading', 'Loading products...');
   loading.setAttribute('role', 'status');
   block.replaceChildren(loading);
 
   try {
-    const response = await fetch(new URL('./data/products.json', import.meta.url));
-    if (!response.ok) throw new Error(`Product data request failed with status ${response.status}.`);
-    const catalogue = await response.json();
-    const pathSegments = window.location.pathname.split('/').filter(Boolean);
-    const categorySlug = pathSegments[pathSegments.length - 1]?.toLowerCase();
-    const category = catalogue.categories[categorySlug];
-    if (!category) throw new Error(`No product data is configured for "${categorySlug}".`);
-    if (!Array.isArray(category.products) || catalogue.pageSize < 1) {
-      throw new Error(`Product data for "${categorySlug}" is invalid.`);
+    if (!sheetUrl || !assetBaseUrl) {
+      throw new Error('Add a published DA product sheet JSON link to the product-listing block.');
     }
+
+    const [catalogueResponse, sheetProducts] = await Promise.all([
+      fetch(new URL('./data/products.json', import.meta.url)),
+      fetchAllSheetProducts(sheetUrl, assetBaseUrl),
+    ]);
+    if (!catalogueResponse.ok) {
+      throw new Error(`Product listing configuration request failed with status ${catalogueResponse.status}.`);
+    }
+    const catalogue = await catalogueResponse.json();
+    const params = new URLSearchParams(window.location.search);
+    const categorySlug = (
+      params.get('categorySlug')
+      || params.get('categories')
+      || params.get('category')
+      || 'footwear'
+    ).trim().toLowerCase();
+    const categoryConfig = catalogue.categories[categorySlug];
+    if (!categoryConfig) throw new Error(`No product listing configuration exists for "${categorySlug}".`);
+    if (!Number.isSafeInteger(catalogue.pageSize) || catalogue.pageSize < 1
+      || !Array.isArray(categoryConfig.priceRanges)) {
+      throw new Error(`Product listing configuration for "${categorySlug}" is invalid.`);
+    }
+    const products = sheetProducts.filter((product) => product.categorySlug === categorySlug);
+    if (products.length === 0) throw new Error(`The product sheet has no products for "${categorySlug}".`);
+    const category = { ...categoryConfig, products };
 
     document.title = `${category.title} | FlipKart`;
     block.replaceChildren(buildPage(category, catalogue));

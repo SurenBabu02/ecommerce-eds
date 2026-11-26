@@ -2,6 +2,13 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 
 const categoryLabels = new Set(['electronics', 'fashion', 'footwear', 'accessories']);
 const categoryPaths = {
+  electronics: '/pages/products?categorySlug=electronics',
+  fashion: '/pages/products?categorySlug=fashion',
+  footwear: '/pages/products?categorySlug=footwear',
+  accessories: '/pages/products?categorySlug=accessories',
+};
+
+const legacyCategoryPaths = {
   electronics: '/category/electronics',
   fashion: '/category/fashion',
   footwear: '/category/footwear',
@@ -31,7 +38,11 @@ function isCategoryCards(block) {
         && links.length <= 1
         && (!links.length || (
           links[0].querySelector('picture')
-          && [categoryPaths[labels[index]], `/${labels[index]}`].includes(links[0].getAttribute('href'))
+          && [
+            categoryPaths[labels[index]],
+            // legacyCategoryPaths[labels[index]],
+            `/${labels[index]}`,
+          ].includes(links[0].getAttribute('href'))
         ));
     });
 }
@@ -59,11 +70,10 @@ export default function decorate(block) {
     if (block.classList.contains('categories')) {
       const image = li.querySelector('.cards-card-image');
       const body = li.querySelector('.cards-card-body');
-      const imageLink = image.querySelector('a');
       const picture = image.querySelector('picture');
       const link = document.createElement('a');
       link.className = 'cards-category-link';
-      link.href = imageLink?.getAttribute('href') || categoryPaths[categoryLabel];
+      link.href = categoryPaths[categoryLabel];
       link.setAttribute('aria-label', body.textContent.trim());
       image.replaceChildren(picture);
       link.append(image, body);
