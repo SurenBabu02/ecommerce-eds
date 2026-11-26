@@ -15,6 +15,13 @@ export default async function decorate(block) {
   block.textContent = '';
   const footer = document.createElement('div');
   while (fragment.firstElementChild) footer.append(fragment.firstElementChild);
+  footer.querySelectorAll('a[href]').forEach((link) => {
+    const url = new URL(link.href, window.location.origin);
+    if (url.pathname !== '/pages/account' && url.pathname !== '/account') return;
+    const listItem = link.closest('li');
+    if (listItem) listItem.remove();
+    else link.remove();
+  });
 
   block.append(footer);
 }

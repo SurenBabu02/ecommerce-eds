@@ -8,13 +8,6 @@ const categoryPaths = {
   accessories: '/pages/products?categorySlug=accessories',
 };
 
-const legacyCategoryPaths = {
-  electronics: '/category/electronics',
-  fashion: '/category/fashion',
-  footwear: '/category/footwear',
-  accessories: '/category/accessories',
-};
-
 function getRowLabel(row) {
   return [...row.children]
     .filter((cell) => !cell.querySelector('picture'))

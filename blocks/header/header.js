@@ -1,4 +1,5 @@
 import { decorateIcons, getMetadata } from '../../scripts/aem.js';
+import { CART_CHANGE_EVENT, CART_STORAGE_KEY, getCartCount } from '../../scripts/cart.js';
 import { loadFragment } from '../fragment/fragment.js';
 
 // media query match that indicates mobile/tablet width
@@ -127,11 +128,46 @@ function decorateNavTools(nav) {
     content.append(createToolLink('search', 'Search', '/search'));
   }
 
-  ['account', 'cart'].forEach((name) => {
-    if (!tools.querySelector(`.nav-tool-${name}`)) {
-      const label = name === 'account' ? 'My account' : 'Cart';
-      content.append(createToolLink(name, label, `/${name}`));
+  let accountLink = tools.querySelector('.nav-tool-account');
+  if (!accountLink) {
+    accountLink = createToolLink('account', 'My account', '/pages/account');
+    content.append(accountLink);
+  }
+  accountLink.href = '/pages/account';
+  accountLink.setAttribute('aria-label', 'My account');
+
+  let cartLink = tools.querySelector('.nav-tool-cart');
+  if (!cartLink) {
+    cartLink = createToolLink('cart', 'Cart', '/pages/cart');
+    content.append(cartLink);
+  }
+  cartLink.href = '/pages/cart';
+  let cartCount = cartLink.querySelector('.nav-tool-cart-count');
+  if (!cartCount) {
+    cartCount = document.createElement('span');
+    cartCount.className = 'nav-tool-cart-count';
+    cartCount.setAttribute('aria-hidden', 'true');
+    cartLink.append(cartCount);
+  }
+
+  const updateCartCount = () => {
+    try {
+      const count = getCartCount();
+      cartCount.textContent = count > 99 ? '99+' : String(count);
+      cartCount.hidden = count === 0;
+      cartLink.setAttribute('aria-label', `Cart, ${count} ${count === 1 ? 'item' : 'items'}`);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Unable to read cart count.', error);
+      cartCount.textContent = '!';
+      cartCount.hidden = false;
+      cartLink.setAttribute('aria-label', 'Cart count unavailable');
     }
+  };
+  updateCartCount();
+  window.addEventListener(CART_CHANGE_EVENT, updateCartCount);
+  window.addEventListener('storage', (event) => {
+    if (event.key === CART_STORAGE_KEY || event.key === null) updateCartCount();
   });
 
   decorateIcons(tools);

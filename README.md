@@ -11,7 +11,7 @@ The page content is managed in Document Authoring. Build the home page from thes
 3. A `cards products` block with product image, name, price, and a primary action per card.
 4. An optional `hero promotion` block for a campaign banner.
 
-The `/nav` document supplies the brand and navigation links (for example, Shop, Deals, About, and Help). Header search, account, and cart controls are added by the header block; account and cart pages can be authored at `/account` and `/cart`.
+The `/nav` document supplies the brand and navigation links (for example, Shop, Deals, About, and Help). Header search, account, and cart controls are added by the header block; author the `account`, `cart`, and `checkout` blocks at `/pages/account`, `/pages/cart`, and `/pages/checkout`. Cart, profile, wishlist, local order history, and checkout addresses are stored in browser local storage. Placing an order records a local demo order; no payment is processed.
 
 ## Environments
 - Preview: https://main--ecommerce-eds--SurenBabu02.aem.page/

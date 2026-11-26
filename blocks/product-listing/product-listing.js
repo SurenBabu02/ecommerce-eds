@@ -1,3 +1,5 @@
+import { addToCart as addProductToCart } from '../../scripts/cart.js';
+
 function createElement(tagName, className, text) {
   const element = document.createElement(tagName);
   if (className) element.className = className;
@@ -33,20 +35,9 @@ function getSelectedValues(filters, group) {
 
 function addToCart(product, cartStatus) {
   try {
-    const savedCart = localStorage.getItem('ecommerce-cart');
-    const cart = savedCart ? JSON.parse(savedCart) : {};
-    if (!cart || typeof cart !== 'object' || Array.isArray(cart)) {
-      throw new Error('Stored cart data must be an object.');
-    }
-
-    const quantity = Number(cart[product.id] || 0);
-    if (!Number.isSafeInteger(quantity) || quantity < 0) {
-      throw new Error(`Invalid stored quantity for ${product.id}.`);
-    }
-
-    cart[product.id] = quantity + 1;
-    localStorage.setItem('ecommerce-cart', JSON.stringify(cart));
+    addProductToCart(product, 1);
     cartStatus.textContent = `${product.name} added to cart.`;
+    window.location.assign('/pages/cart');
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Unable to add product to cart.', error);
@@ -57,6 +48,10 @@ function addToCart(product, cartStatus) {
 function createProductCard(product, imagePath, cartStatus) {
   const item = createElement('li', 'product-listing-item');
   const card = createElement('article', 'product-listing-card');
+  const detailUrl = `/pages/product-details?productId=${encodeURIComponent(product.id)}`
+    + `&categorySlug=${encodeURIComponent(product.categorySlug)}`;
+  const productLink = createElement('a', 'product-listing-card-link');
+  productLink.href = detailUrl;
   const imageWrapper = createElement('div', 'product-listing-image');
   const image = document.createElement('img');
   image.src = imagePath;
@@ -75,8 +70,11 @@ function createProductCard(product, imagePath, cartStatus) {
   const addButton = createElement('button', 'product-listing-add-button', 'Add to Cart');
   addButton.type = 'button';
   addButton.addEventListener('click', () => addToCart(product, cartStatus));
-  details.append(name, meta, price, addButton);
-  card.append(imageWrapper, details);
+  details.append(name, meta, price);
+  productLink.append(imageWrapper, details);
+  const actions = createElement('div', 'product-listing-card-actions');
+  actions.append(addButton);
+  card.append(productLink, actions);
   item.append(card);
   return item;
 }

@@ -1,0 +1,449 @@
+.account {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+}
+
+.account .account-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  color: var(--muted-color);
+  font-size: var(--body-font-size-xs);
+}
+
+.account .account-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.account .account-breadcrumb a:hover {
+  color: var(--link-color);
+}
+
+.account .account-layout {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.account .account-tabs {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account .account-tab {
+  display: grid;
+  min-width: 0;
+  min-height: 29px;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 4px 3px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account .account-tab svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.account .account-tab[aria-selected='true'] {
+  border-left-color: var(--link-color);
+  background: #e8f4fb;
+  color: var(--navy-color);
+}
+
+.account .account-tab:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.account .account-tab-label {
+  overflow-wrap: anywhere;
+}
+
+.account .account-panel {
+  min-width: 0;
+  min-height: 210px;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--background-color);
+}
+
+.account .account-panel-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.account .account-avatar {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9edf1;
+}
+
+.account .account-avatar-head {
+  position: absolute;
+  top: 10px;
+  left: 17px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #bac3cc;
+}
+
+.account .account-avatar-body {
+  position: absolute;
+  bottom: -5px;
+  left: 9px;
+  width: 28px;
+  height: 24px;
+  border-radius: 50% 50% 0 0;
+  background: #bac3cc;
+}
+
+.account .account-profile-form {
+  display: grid;
+  gap: 7px;
+}
+
+.account .account-field {
+  position: relative;
+}
+
+.account .account-field label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.account .account-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 23px;
+  padding: 3px 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 9px;
+}
+
+.account .account-field input:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 1px;
+}
+
+.account .account-save {
+  min-height: 25px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--navy-color);
+  color: var(--background-color);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account .account-save:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.account .account-save:hover {
+  background: var(--dark-color);
+}
+
+.account .account-status,
+.account .account-empty {
+  margin: 4px 0 0;
+  color: var(--muted-color);
+  font-size: 9px;
+}
+
+.account .account-error {
+  margin: 0;
+  color: #b42318;
+  font-size: var(--body-font-size-xs);
+}
+
+.account .account-order-list,
+.account .account-address-list {
+  display: grid;
+  gap: 9px;
+}
+
+.account .account-order,
+.account .account-address-card {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+}
+
+.account .account-order-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 9px;
+}
+
+.account .account-order-info {
+  display: grid;
+  gap: 2px;
+}
+
+.account .account-order-info span,
+.account .account-order-status {
+  color: var(--muted-color);
+}
+
+.account .account-order-items,
+.account .account-product-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account .account-product-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.account .account-product-row:last-child {
+  border-bottom: 0;
+}
+
+.account .account-product-image {
+  display: block;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--light-color);
+}
+
+.account .account-product-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.account .account-product-details {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  font-size: 9px;
+}
+
+.account .account-product-title {
+  color: var(--text-color);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.account .account-product-title:hover {
+  color: var(--link-color);
+}
+
+.account .account-product-brand,
+.account .account-product-quantity {
+  margin: 0;
+  color: var(--muted-color);
+}
+
+.account .account-product-price {
+  font-size: 9px;
+}
+
+.account .account-product-remove {
+  min-height: 24px;
+  grid-column: 2;
+  justify-self: start;
+  padding: 3px 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.account .account-product-remove:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.account .account-product-remove:hover {
+  background: var(--light-color);
+}
+
+.account .account-order-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 7px 0 0;
+  font-size: 10px;
+}
+
+.account .account-address-name {
+  margin: 0 0 5px;
+  font-size: 11px;
+}
+
+.account .account-address-card p {
+  margin: 2px 0;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+@media (width >= 640px) {
+  .account {
+    padding: 12px 0 56px;
+  }
+
+  .account .account-breadcrumb {
+    margin-bottom: 16px;
+  }
+
+  .account .account-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .account .account-tab {
+    min-height: 38px;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    padding: 7px 8px;
+    font-size: var(--body-font-size-s);
+  }
+
+  .account .account-tab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .account .account-panel {
+    min-height: 260px;
+    padding: 18px;
+  }
+
+  .account .account-panel-title {
+    margin-bottom: 14px;
+    font-size: var(--heading-font-size-s);
+  }
+
+  .account .account-avatar {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 14px;
+  }
+
+  .account .account-avatar-head {
+    top: 13px;
+    left: 24px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .account .account-avatar-body {
+    left: 13px;
+    width: 38px;
+    height: 32px;
+  }
+
+  .account .account-profile-form {
+    max-width: 420px;
+    gap: 10px;
+  }
+
+  .account .account-field input {
+    height: 38px;
+    padding: 7px 10px;
+    font-size: var(--body-font-size-s);
+  }
+
+  .account .account-save {
+    min-height: 40px;
+    font-size: var(--body-font-size-s);
+  }
+
+  .account .account-status,
+  .account .account-empty {
+    font-size: var(--body-font-size-xs);
+  }
+
+  .account .account-order,
+  .account .account-address-card {
+    padding: 12px;
+  }
+
+  .account .account-order-heading,
+  .account .account-product-details,
+  .account .account-address-card p {
+    font-size: var(--body-font-size-s);
+  }
+
+  .account .account-product-row {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 10px 0;
+  }
+
+  .account .account-product-remove {
+    grid-column: auto;
+    min-height: 32px;
+    padding: 5px 10px;
+    font-size: var(--body-font-size-xs);
+  }
+
+  .account .account-product-price,
+  .account .account-order-total {
+    font-size: var(--body-font-size-s);
+  }
+
+  .account .account-address-name {
+    font-size: var(--heading-font-size-xs);
+  }
+}
