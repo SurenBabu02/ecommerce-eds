@@ -31,6 +31,10 @@
   padding: 8px 0 12px;
 }
 
+.product-listing-hero.product-listing-search-hero {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .product-listing-hero h1 {
   margin: 0 0 4px;
   font-size: var(--heading-font-size-m);

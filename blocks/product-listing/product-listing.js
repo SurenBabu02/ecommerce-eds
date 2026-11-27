@@ -1,6 +1,21 @@
 import { addToCart as addProductToCart } from '../../scripts/cart.js';
 import { getWishlist, toggleWishlist } from '../../scripts/account.js';
 
+const SEARCH_PRICE_RANGES = [
+  {
+    value: '0-50', label: '$0 - $50', min: 0, max: 50,
+  },
+  {
+    value: '50-100', label: '$50 - $100', min: 50, max: 100,
+  },
+  {
+    value: '100-500', label: '$100 - $500', min: 100, max: 500,
+  },
+  {
+    value: '500-plus', label: '$500+', min: 500, max: null,
+  },
+];
+
 function createElement(tagName, className, text) {
   const element = document.createElement(tagName);
   if (className) element.className = className;
@@ -183,6 +198,8 @@ async function fetchAllSheetProducts(sheetUrl, assetBaseUrl) {
   let total;
 
   do {
+    // Product sheet offsets depend on the previous response length.
+    // eslint-disable-next-line no-await-in-loop
     const page = await fetchSheetPage(sheetUrl, offset);
     if (total !== undefined && page.total !== total) {
       throw new Error('The product sheet changed while its pages were being loaded.');
@@ -252,6 +269,17 @@ function sortProducts(products, sortOrder) {
   return sorted;
 }
 
+function findProducts(products, searchTerm) {
+  const query = searchTerm.toLowerCase();
+  return products.filter((product) => [
+    product.name,
+    product.brand,
+    product.category,
+    product.categorySlug,
+    product.description,
+  ].join(' ').toLowerCase().includes(query));
+}
+
 function buildSortControl() {
   const label = createElement('label', 'product-listing-sort-label', 'Sort by');
   const select = createElement('select', 'product-listing-sort');
@@ -290,19 +318,30 @@ function buildPage(category, catalogue) {
     createElement('h1', '', category.title),
     createElement('p', '', category.description),
   );
-  const heroImage = document.createElement('img');
-  heroImage.src = category.heroImage;
-  heroImage.alt = '';
-  heroImage.loading = 'eager';
-  const heroImageWrapper = createElement('div', 'product-listing-hero-image');
-  heroImageWrapper.append(heroImage);
-  hero.append(heroCopy, heroImageWrapper);
+  hero.append(heroCopy);
+  if (category.heroImage) {
+    const heroImage = document.createElement('img');
+    heroImage.src = category.heroImage;
+    heroImage.alt = '';
+    heroImage.loading = 'eager';
+    const heroImageWrapper = createElement('div', 'product-listing-hero-image');
+    heroImageWrapper.append(heroImage);
+    hero.append(heroImageWrapper);
+  } else {
+    hero.classList.add('product-listing-search-hero');
+  }
 
   const layout = createElement('div', 'product-listing-layout');
   const filters = createElement('aside', 'product-listing-filters');
   filters.setAttribute('aria-label', 'Filter products');
   filters.append(createElement('h2', 'product-listing-filters-title', 'Filter By'));
-  const filterCategories = [...new Set(category.products.map((product) => product.category))];
+  const filterCategories = category.searchTerm
+    ? [...new Set(category.products.map((product) => product.categorySlug))]
+      .map((slug) => ({
+        value: slug,
+        label: catalogue.categories[slug]?.title || slug,
+      }))
+    : [...new Set(category.products.map((product) => product.category))];
   const brands = [...new Set(category.products.map((product) => product.brand))];
   filters.append(
     createFilterGroup('Category', 'category', filterCategories),
@@ -331,7 +370,8 @@ function buildPage(category, catalogue) {
     const selectedBrands = getSelectedValues(filters, 'brand');
     const selectedPrices = getSelectedValues(filters, 'price');
     const filtered = category.products.filter((product) => (
-      (selectedCategories.size === 0 || selectedCategories.has(product.category))
+      (selectedCategories.size === 0
+        || selectedCategories.has(category.searchTerm ? product.categorySlug : product.category))
       && (selectedBrands.size === 0 || selectedBrands.has(product.brand))
       && matchesSelectedPrice(product, selectedPrices, category.priceRanges)
     ));
@@ -351,7 +391,10 @@ function buildPage(category, catalogue) {
       ));
     });
     if (filtered.length === 0) {
-      products.append(createElement('li', 'product-listing-empty', 'No products match these filters.'));
+      const emptyMessage = category.searchTerm
+        ? `No products found for "${category.searchTerm}".`
+        : 'No products match these filters.';
+      products.append(createElement('li', 'product-listing-empty', emptyMessage));
     }
     paginationWrapper.replaceChildren(createPagination(pageCount, currentPage, (nextPage) => {
       currentPage = nextPage;
@@ -398,6 +441,26 @@ export default async function decorate(block) {
     }
     const catalogue = await catalogueResponse.json();
     const params = new URLSearchParams(window.location.search);
+    const searchTerm = (params.get('search') || '').trim();
+    if (searchTerm) {
+      if (!Number.isSafeInteger(catalogue.pageSize) || catalogue.pageSize < 1
+        || !catalogue.categories || typeof catalogue.categories !== 'object') {
+        throw new Error('Product listing configuration is invalid.');
+      }
+
+      const products = findProducts(sheetProducts, searchTerm);
+      const category = {
+        title: 'Search results',
+        description: `${products.length} products matching "${searchTerm}".`,
+        products,
+        priceRanges: SEARCH_PRICE_RANGES,
+        searchTerm,
+      };
+      document.title = `Search results for ${searchTerm} | FlipKart`;
+      block.replaceChildren(buildPage(category, catalogue));
+      return;
+    }
+
     const categorySlug = (
       params.get('categorySlug')
       || params.get('categories')

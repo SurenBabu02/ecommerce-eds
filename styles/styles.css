@@ -24,9 +24,7 @@
   --category-fashion-bg: #ffebe8;
   --category-footwear-bg: #f0eafa;
   --category-accessories-bg: #fff5d9;
-  --category-tile-height: 46px;
-  --category-icon-size: 28px;
-  --category-label-font-size: 9px;
+  --category-label-font-size: clamp(8px, 2.6vw, 16px);
   --category-desktop-label-font-size: 20px;
   --link-color: #2874c6;
   --link-hover-color: #1b5794;
@@ -51,14 +49,6 @@
 
   /* nav height */
   --nav-height: 64px;
-}
-
-@media (width >= 640px) {
-  :root {
-    --category-tile-height: 56px;
-    --category-icon-size: 36px;
-    --category-label-font-size: 11px;
-  }
 }
 
 /* fallback fonts */

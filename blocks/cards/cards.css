@@ -3,8 +3,14 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+
+@media (width >= 640px) {
+  .cards > ul {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  }
 }
 
 .cards > ul > li {
@@ -26,6 +32,104 @@
 .cards > ul > li img {
   width: 100%;
   object-fit: cover;
+}
+
+.cards.promotions .cards-navigation-buttons {
+  display: none;
+}
+
+@media (width < 640px) {
+  .cards.promotions {
+    position: relative;
+  }
+
+  .cards.promotions > ul {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 0;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cards.promotions > ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cards.promotions > ul > li {
+    flex: 0 0 min(45vw, 220px);
+    scroll-snap-align: start;
+  }
+
+  .cards.promotions .cards-navigation-buttons {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    left: 6px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .cards.promotions .cards-navigation-buttons button {
+    box-sizing: border-box;
+    position: relative;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    border: 1px solid rgb(255 255 255 / 80%);
+    border-radius: 50%;
+    padding: 0;
+    background-color: rgb(255 255 255 / 90%);
+    box-shadow: 0 2px 8px rgb(19 19 19 / 20%);
+    color: var(--navy-color);
+    transition: background-color 0.2s, transform 0.2s;
+    pointer-events: auto;
+  }
+
+  .cards.promotions .cards-navigation-buttons button:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 3px;
+  }
+
+  .cards.promotions .cards-navigation-buttons button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .cards.promotions .cards-navigation-buttons button:not(:disabled):hover,
+  .cards.promotions .cards-navigation-buttons button:not(:disabled):focus-visible {
+    background-color: #fff;
+    transform: scale(1.05);
+  }
+
+  .cards.promotions .cards-navigation-buttons button::after {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 2px);
+    width: 10px;
+    height: 10px;
+    border: 2px solid;
+    border-bottom: 0;
+    border-left: 0;
+    content: '';
+    transform: translate(-50%, -50%) rotate(-135deg);
+  }
+
+  .cards.promotions .cards-navigation-buttons .cards-next::after {
+    left: calc(50% - 2px);
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .cards.promotions > ul:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+  }
 }
 
 .cards.products > ul {
@@ -80,34 +184,20 @@
 .cards.categories > ul > li {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--category-tile-height);
-  border: 0;
-  border-radius: 4px;
-  padding: 4px 2px;
-  background-color: var(--category-electronics-bg);
-}
-
-.cards.categories > ul > li:nth-child(4n + 2) {
-  background-color: var(--category-fashion-bg);
-}
-
-.cards.categories > ul > li:nth-child(4n + 3) {
-  background-color: var(--category-footwear-bg);
-}
-
-.cards.categories > ul > li:nth-child(4n) {
-  background-color: var(--category-accessories-bg);
+  min-height: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0;
+  background-color: var(--background-color);
 }
 
 .cards.categories .cards-category-link {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   width: 100%;
-  min-height: var(--category-tile-height);
+  height: 100%;
   color: inherit;
   text-decoration: none;
 }
@@ -117,24 +207,52 @@
 }
 
 .cards.categories .cards-card-image {
-  flex: 0 0 var(--category-icon-size);
-  width: var(--category-icon-size);
-  height: var(--category-icon-size);
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.cards.categories .cards-card-image picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .cards.categories > ul > li img {
-  aspect-ratio: 1;
-  object-fit: contain;
-  mix-blend-mode: multiply;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: normal;
 }
 
 .cards.categories .cards-card-body {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
   margin: 0;
+  padding: 8px 2px;
+  background-color: var(--category-electronics-bg);
   font-size: var(--category-label-font-size);
   font-weight: 500;
   line-height: 1.2;
   text-align: center;
-  white-space: nowrap;
+}
+
+.cards.categories > ul > li:nth-child(4n + 2) .cards-card-body {
+  background-color: var(--category-fashion-bg);
+}
+
+.cards.categories > ul > li:nth-child(4n + 3) .cards-card-body {
+  background-color: var(--category-footwear-bg);
+}
+
+.cards.categories > ul > li:nth-child(4n) .cards-card-body {
+  background-color: var(--category-accessories-bg);
 }
 
 .cards.categories .cards-card-body p {
@@ -142,33 +260,13 @@
 }
 
 @media (width >= 640px) {
-  .cards.categories > ul > li {
-    display: block;
-    min-height: 0;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0;
-    background-color: var(--background-color);
-  }
-
-  .cards.categories .cards-category-link {
-    display: block;
-    min-height: 0;
-  }
-
-  .cards.categories .cards-card-image {
-    width: auto;
-    height: auto;
-  }
-
-  .cards.categories > ul > li img {
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    mix-blend-mode: normal;
+  .cards.categories > ul {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .cards.categories .cards-card-body {
-    margin: 12px;
+    min-height: 80px;
+    padding: 16px 8px;
     font-size: var(--category-desktop-label-font-size);
   }
 
