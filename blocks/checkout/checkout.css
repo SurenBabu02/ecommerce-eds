@@ -176,6 +176,7 @@
   font-weight: 600;
 }
 
+.checkout .checkout-item-size,
 .checkout .checkout-item-quantity {
   color: var(--muted-color);
 }

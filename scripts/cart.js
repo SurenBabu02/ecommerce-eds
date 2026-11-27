@@ -8,6 +8,7 @@ function normalizeItem(id, value) {
     }
     return value === 0 ? null : {
       id,
+      size: '',
       title: '',
       brand: '',
       category: '',
@@ -29,7 +30,8 @@ function normalizeItem(id, value) {
   }
 
   return {
-    id,
+    id: String(value.id || id),
+    size: String(value.size || ''),
     title: String(value.title || ''),
     brand: String(value.brand || ''),
     category: String(value.category || ''),
@@ -51,6 +53,12 @@ function normalizeCart(value) {
     if (normalized) cart[id] = normalized;
     return cart;
   }, {});
+}
+
+function getCartKey(id, size = '') {
+  const productId = String(id || '').trim();
+  const selectedSize = String(size || '').trim();
+  return selectedSize ? `${productId}::${encodeURIComponent(selectedSize)}` : productId;
 }
 
 function saveCart(cart) {
@@ -84,6 +92,7 @@ function getProductDetails(product) {
 
   return {
     id,
+    size: String(product.size || '').trim(),
     title,
     brand: String(product.brand || ''),
     category: String(product.category || ''),
@@ -99,29 +108,32 @@ export function addToCart(product, quantity = 1) {
   }
   const details = getProductDetails(product);
   const cart = readCart();
-  const existing = cart[details.id];
+  const cartKey = getCartKey(details.id, details.size);
+  const existing = cart[cartKey];
   const nextQuantity = (existing ? existing.quantity : 0) + quantity;
   if (!Number.isSafeInteger(nextQuantity)) {
     throw new Error('Cart quantity exceeds the supported limit.');
   }
-  cart[details.id] = { ...existing, ...details, quantity: nextQuantity };
+  cart[cartKey] = { ...existing, ...details, quantity: nextQuantity };
   saveCart(cart);
 }
 
-export function setCartQuantity(id, quantity) {
+export function setCartQuantity(id, quantity, size = '') {
   if (!Number.isSafeInteger(quantity) || quantity < 1) {
     throw new Error('Cart quantity must be a positive whole number.');
   }
   const cart = readCart();
-  if (!cart[id]) throw new Error(`Product ${id} is not in the cart.`);
-  cart[id].quantity = quantity;
+  const cartKey = getCartKey(id, size);
+  if (!cart[cartKey]) throw new Error(`Product ${id} is not in the cart.`);
+  cart[cartKey].quantity = quantity;
   saveCart(cart);
 }
 
-export function removeFromCart(id) {
+export function removeFromCart(id, size = '') {
   const cart = readCart();
-  if (!cart[id]) return;
-  delete cart[id];
+  const cartKey = getCartKey(id, size);
+  if (!cart[cartKey]) return;
+  delete cart[cartKey];
   saveCart(cart);
 }
 

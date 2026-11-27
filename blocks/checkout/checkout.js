@@ -194,6 +194,7 @@ function renderCheckout(block, cart, productMap) {
     const info = createElement('div', 'checkout-item-info');
     info.append(
       createElement('span', 'checkout-item-name', product.title),
+      ...(item.size ? [createElement('span', 'checkout-item-size', `Size: ${item.size}`)] : []),
       createElement('span', 'checkout-item-quantity', `Qty ${item.quantity}`),
     );
     if (product.price === null) {

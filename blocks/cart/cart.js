@@ -73,6 +73,7 @@ function renderCart(block, productMap = new Map()) {
   items.forEach((item) => {
     const product = productMap.get(item.id);
     const title = item.title || String(product?.title || `Product ${item.id}`);
+    const itemLabel = item.size ? `${title}, size ${item.size}` : title;
     const brand = item.brand || String(product?.brand || '');
     const category = item.category || String(product?.category || '');
     const fallbackPrice = product?.price === undefined || product?.price === null
@@ -95,17 +96,18 @@ function renderCart(block, productMap = new Map()) {
     if (brand || category) {
       details.append(createElement('p', 'cart-item-meta', [brand, category].filter(Boolean).join(' · ')));
     }
+    if (item.size) details.append(createElement('p', 'cart-item-size', `Size: ${item.size}`));
     details.append(createElement('p', 'cart-item-price', price === null ? 'Price unavailable' : formatPrice(price)));
 
     const quantity = createElement('div', 'cart-item-quantity');
-    quantity.setAttribute('aria-label', `Quantity for ${title}`);
+    quantity.setAttribute('aria-label', `Quantity for ${itemLabel}`);
     const decrement = createElement('button', 'cart-quantity-button', '−');
     decrement.type = 'button';
     decrement.disabled = item.quantity <= 1;
-    decrement.setAttribute('aria-label', `Decrease quantity of ${title}`);
+    decrement.setAttribute('aria-label', `Decrease quantity of ${itemLabel}`);
     decrement.addEventListener('click', () => {
       try {
-        setCartQuantity(item.id, item.quantity - 1);
+        setCartQuantity(item.id, item.quantity - 1, item.size);
       } catch (error) {
         status.textContent = 'Unable to update this item. Please try again.';
         // eslint-disable-next-line no-console
@@ -116,10 +118,10 @@ function renderCart(block, productMap = new Map()) {
     count.setAttribute('aria-live', 'polite');
     const increment = createElement('button', 'cart-quantity-button', '+');
     increment.type = 'button';
-    increment.setAttribute('aria-label', `Increase quantity of ${title}`);
+    increment.setAttribute('aria-label', `Increase quantity of ${itemLabel}`);
     increment.addEventListener('click', () => {
       try {
-        setCartQuantity(item.id, item.quantity + 1);
+        setCartQuantity(item.id, item.quantity + 1, item.size);
       } catch (error) {
         status.textContent = 'Unable to update this item. Please try again.';
         // eslint-disable-next-line no-console
@@ -136,10 +138,10 @@ function renderCart(block, productMap = new Map()) {
     );
     const remove = createElement('button', 'cart-item-remove', '×');
     remove.type = 'button';
-    remove.setAttribute('aria-label', `Remove ${title} from cart`);
+    remove.setAttribute('aria-label', `Remove ${itemLabel} from cart`);
     remove.addEventListener('click', () => {
       try {
-        removeFromCart(item.id);
+        removeFromCart(item.id, item.size);
       } catch (error) {
         status.textContent = 'Unable to remove this item. Please try again.';
         // eslint-disable-next-line no-console

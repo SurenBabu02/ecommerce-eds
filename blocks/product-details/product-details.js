@@ -3,6 +3,9 @@ import { getWishlist, toggleWishlist } from '../../scripts/account.js';
 
 const DEFAULT_PRODUCT_SHEET = '/pages/categories/footwear.json';
 const PRODUCT_PLACEHOLDER = '/blocks/product-listing/images/product-placeholder.svg';
+const FOOTWEAR_SIZES = ['3', '4', '5', '6', '7', '8', '9', '10', '11'];
+const CLOTHING_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+let sizeSelectorId = 0;
 
 function createElement(tagName, className, text) {
   const element = document.createElement(tagName);
@@ -81,9 +84,23 @@ async function fetchProductRows(sheetUrl) {
   });
 }
 
+function getProductImages(product, assetBaseUrl) {
+  const imageFields = Object.entries(product)
+    .filter(([field]) => /^image\d*$/i.test(field))
+    .sort(([fieldA], [fieldB]) => {
+      const orderA = Number(fieldA.match(/\d+$/)?.[0] || 1);
+      const orderB = Number(fieldB.match(/\d+$/)?.[0] || 1);
+      return orderA - orderB;
+    });
+  const images = [...new Set(imageFields
+    .map(([, value]) => String(value || '').trim())
+    .filter(Boolean)
+    .map((imagePath) => new URL(imagePath, assetBaseUrl).href))];
+  return images.length ? images : [PRODUCT_PLACEHOLDER];
+}
+
 function getProductImage(product, assetBaseUrl) {
-  const imagePath = String(product.image || '').trim();
-  return imagePath ? new URL(imagePath, assetBaseUrl).href : PRODUCT_PLACEHOLDER;
+  return getProductImages(product, assetBaseUrl)[0];
 }
 
 function setProductImage(image, imageUrl, alt) {
@@ -103,10 +120,70 @@ function formatPrice(price) {
   }).format(Number(price));
 }
 
-function addToCart(product, quantity, status) {
+function getProductSizeOptions(product) {
+  const category = String(product.category || '').trim().toLowerCase();
+  const categorySlug = String(product.categorySlug || '').trim().toLowerCase();
+  if (categorySlug === 'footwear' || /\b(shoes?|sneakers?|trainers?)\b/.test(category)) {
+    return FOOTWEAR_SIZES;
+  }
+  if (categorySlug === 'fashion' && /\b(clothing|apparel)\b/.test(category)) {
+    return CLOTHING_SIZES;
+  }
+  return null;
+}
+
+function createSizeSelector(product, sizes, onSelect) {
+  sizeSelectorId += 1;
+  const fieldset = createElement('fieldset', 'pdp-size-selector');
+  const legend = createElement('legend', '', 'SELECT SIZE');
+  const chartButton = createElement('button', 'pdp-size-chart-button', 'SIZE CHART ›');
+  chartButton.type = 'button';
+  chartButton.setAttribute('aria-haspopup', 'dialog');
+  legend.append(chartButton);
+  fieldset.append(legend);
+
+  const options = createElement('div', 'pdp-size-options');
+  sizes.forEach((size, index) => {
+    const optionId = `pdp-size-${sizeSelectorId}-${index}`;
+    const label = createElement('label', 'pdp-size-option');
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = `pdp-size-${sizeSelectorId}`;
+    input.id = optionId;
+    input.value = size;
+    const value = createElement('span', '', size);
+    label.htmlFor = optionId;
+    label.append(input, value);
+    input.addEventListener('change', () => onSelect(size));
+    options.append(label);
+  });
+  fieldset.append(options);
+
+  const dialog = document.createElement('dialog');
+  dialog.className = 'pdp-size-chart';
+  dialog.setAttribute('aria-labelledby', `pdp-size-chart-title-${sizeSelectorId}`);
+  const chartHeading = createElement('h2', '', 'Available Sizes');
+  chartHeading.id = `pdp-size-chart-title-${sizeSelectorId}`;
+  const chartDescription = createElement(
+    'p',
+    '',
+    `Available sizes for ${String(product.category || 'this product').toLowerCase()}.`,
+  );
+  const sizeList = createElement('ul', 'pdp-size-chart-list');
+  sizes.forEach((size) => sizeList.append(createElement('li', '', size)));
+  const closeButton = createElement('button', 'pdp-size-chart-close', 'Close');
+  closeButton.type = 'button';
+  closeButton.addEventListener('click', () => dialog.close());
+  dialog.append(chartHeading, chartDescription, sizeList, closeButton);
+  chartButton.addEventListener('click', () => dialog.showModal());
+
+  return { fieldset, dialog };
+}
+
+function addToCart(product, quantity, status, size = '') {
   try {
-    addProductToCart(product, quantity);
-    status.textContent = `${product.title} added to cart.`;
+    addProductToCart({ ...product, size }, quantity);
+    status.textContent = `${product.title}${size ? ` (size ${size})` : ''} added to cart.`;
     window.location.assign('/pages/cart');
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -158,7 +235,7 @@ function updateBreadcrumb(block, product) {
 
 function createProductPage(block, product, relatedProducts, assetBaseUrl) {
   const title = String(product.title || 'Product');
-  const imageUrl = getProductImage(product, assetBaseUrl);
+  const imageUrls = getProductImages(product, assetBaseUrl);
   const cartStatus = createElement('p', 'pdp-cart-status');
   cartStatus.setAttribute('role', 'status');
   cartStatus.setAttribute('aria-live', 'polite');
@@ -166,23 +243,30 @@ function createProductPage(block, product, relatedProducts, assetBaseUrl) {
   const container = createElement('div', 'pdp-container');
   const gallery = createElement('div', 'pdp-gallery');
   const mainImage = document.createElement('img');
-  setProductImage(mainImage, imageUrl, title);
+  setProductImage(mainImage, imageUrls[0], title);
   mainImage.loading = 'eager';
   const mainImageWrapper = createElement('div', 'pdp-main-image');
   mainImageWrapper.append(mainImage);
 
   const thumbnails = createElement('div', 'pdp-thumbnails');
-  const thumbnail = createElement('button', 'pdp-thumbnail');
-  thumbnail.type = 'button';
-  thumbnail.setAttribute('aria-label', `Show image of ${title}`);
-  thumbnail.setAttribute('aria-pressed', 'true');
-  const thumbnailImage = document.createElement('img');
-  setProductImage(thumbnailImage, imageUrl, '');
-  thumbnail.append(thumbnailImage);
-  thumbnails.append(thumbnail);
-  thumbnail.addEventListener('click', () => {
-    mainImage.src = imageUrl;
-    thumbnail.setAttribute('aria-pressed', 'true');
+  thumbnails.setAttribute('role', 'group');
+  thumbnails.setAttribute('aria-label', `Images of ${title}`);
+  imageUrls.forEach((imageUrl, index) => {
+    const thumbnail = createElement('button', 'pdp-thumbnail');
+    thumbnail.type = 'button';
+    thumbnail.setAttribute('aria-label', `Show image ${index + 1} of ${title}`);
+    thumbnail.setAttribute('aria-pressed', String(index === 0));
+    const thumbnailImage = document.createElement('img');
+    setProductImage(thumbnailImage, imageUrl, '');
+    thumbnail.append(thumbnailImage);
+    thumbnails.append(thumbnail);
+    thumbnail.addEventListener('click', () => {
+      mainImage.src = imageUrl;
+      mainImage.alt = `${title} image ${index + 1}`;
+      thumbnails.querySelectorAll('.pdp-thumbnail').forEach((button, buttonIndex) => {
+        button.setAttribute('aria-pressed', String(buttonIndex === index));
+      });
+    });
   });
   gallery.append(mainImageWrapper, thumbnails);
 
@@ -231,14 +315,28 @@ function createProductPage(block, product, relatedProducts, assetBaseUrl) {
 
   const addButton = createElement('button', 'pdp-add-cart', 'Add to Cart');
   addButton.type = 'button';
+  let selectedSize = '';
+  const sizeOptions = getProductSizeOptions(product);
+  const sizeControls = sizeOptions
+    ? createSizeSelector(product, sizeOptions, (size) => {
+      selectedSize = size;
+      addButton.disabled = false;
+    })
+    : null;
+  addButton.disabled = Boolean(sizeControls);
   addButton.addEventListener('click', () => {
+    if (sizeControls && !selectedSize) {
+      cartStatus.textContent = 'Select a size before adding this item.';
+      sizeControls.fieldset.querySelector('input').focus();
+      return;
+    }
     const requestedQuantity = Number(quantityInput.value);
     if (!Number.isSafeInteger(requestedQuantity) || requestedQuantity < 1) {
       cartStatus.textContent = 'Enter a quantity of 1 or more.';
       quantityInput.focus();
       return;
     }
-    addToCart(product, requestedQuantity, cartStatus);
+    addToCart(product, requestedQuantity, cartStatus, selectedSize);
   });
 
   const wishlist = createElement('button', 'wishlist-link', '♡ Add to Wishlist');
@@ -272,7 +370,9 @@ function createProductPage(block, product, relatedProducts, assetBaseUrl) {
       wishlistStatus.textContent = 'Unable to update your wishlist.';
     }
   });
-  info.append(quantity, addButton, wishlist, wishlistStatus);
+  info.append(quantity);
+  if (sizeControls) info.append(sizeControls.fieldset);
+  info.append(addButton, wishlist, wishlistStatus);
   container.append(gallery, info);
 
   const accordion = createElement('section', 'pdp-accordion');
@@ -324,15 +424,29 @@ function createProductPage(block, product, relatedProducts, assetBaseUrl) {
       relatedProduct,
       getProductImage(relatedProduct, assetBaseUrl),
     ));
-    const relatedAddButton = createElement('button', 'related-add-cart', 'Add to Cart');
+    const relatedSizes = getProductSizeOptions(relatedProduct);
+    const relatedAddButton = createElement(
+      'button',
+      'related-add-cart',
+      relatedSizes ? 'Select Size' : 'Add to Cart',
+    );
     relatedAddButton.type = 'button';
-    relatedAddButton.addEventListener('click', () => addToCart(relatedProduct, 1, cartStatus));
+    if (relatedSizes) {
+      relatedAddButton.addEventListener('click', () => {
+        const url = new URL('/pages/product-details', window.location.origin);
+        url.searchParams.set('productId', relatedProduct.id);
+        window.location.assign(`${url.pathname}${url.search}`);
+      });
+    } else {
+      relatedAddButton.addEventListener('click', () => addToCart(relatedProduct, 1, cartStatus));
+    }
     article.append(relatedAddButton);
     relatedGrid.append(article);
   });
   relatedSection.append(relatedGrid);
 
   block.replaceChildren(container, cartStatus, accordion, relatedSection);
+  if (sizeControls) block.append(sizeControls.dialog);
   updateBreadcrumb(block, product);
 }
 
