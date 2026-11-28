@@ -23,6 +23,53 @@ function createElement(tagName, className, text) {
   return element;
 }
 
+function reportInvalidBanner(categorySlug, reason) {
+  // eslint-disable-next-line no-console
+  console.warn(`Skipping authored banner for "${categorySlug}": ${reason}`);
+}
+
+function getAuthoredBanners(block) {
+  const banners = {};
+  [...block.children].forEach((row) => {
+    const cells = [...row.children];
+    if (cells[0]?.textContent.trim().toLowerCase() !== 'banner') return;
+    if (cells.length < 3) {
+      reportInvalidBanner('unknown', 'add a category slug and an image cell.');
+      return;
+    }
+
+    const categorySlug = cells[1].textContent.trim().toLowerCase();
+    const image = cells[2].querySelector('img');
+    const imagePath = image?.getAttribute('src')?.trim();
+    if (!/^[a-z0-9-]+$/.test(categorySlug)) {
+      reportInvalidBanner(categorySlug || 'unknown', 'the category slug is invalid.');
+      return;
+    }
+    if (!imagePath) return;
+    if (banners[categorySlug]) {
+      reportInvalidBanner(categorySlug, 'more than one banner was authored for this category.');
+      return;
+    }
+
+    let imageUrl;
+    try {
+      imageUrl = new URL(imagePath, window.location.href);
+    } catch {
+      reportInvalidBanner(categorySlug, 'the image URL is invalid.');
+      return;
+    }
+    if (!['http:', 'https:'].includes(imageUrl.protocol)) {
+      reportInvalidBanner(categorySlug, 'the image URL must use HTTP or HTTPS.');
+      return;
+    }
+    banners[categorySlug] = {
+      src: imageUrl.href,
+      alt: image.alt.trim(),
+    };
+  });
+  return banners;
+}
+
 function createFilterGroup(title, group, options) {
   const fieldset = createElement('fieldset', 'product-listing-filter-group');
   const legend = createElement('legend', '', title);
@@ -313,22 +360,25 @@ function buildPage(category, catalogue) {
   breadcrumb.append(breadcrumbList);
 
   const hero = createElement('header', 'product-listing-hero');
-  const heroCopy = createElement('div', 'product-listing-hero-copy');
-  heroCopy.append(
-    createElement('h1', '', category.title),
-    createElement('p', '', category.description),
-  );
-  hero.append(heroCopy);
-  if (category.heroImage) {
+  const banner = category.banner || (category.heroImage
+    ? { src: category.heroImage, alt: '' }
+    : null);
+  if (banner?.src) {
     const heroImage = document.createElement('img');
-    heroImage.src = category.heroImage;
-    heroImage.alt = '';
+    heroImage.src = banner.src;
+    heroImage.alt = banner.alt || `${category.title} banner`;
     heroImage.loading = 'eager';
     const heroImageWrapper = createElement('div', 'product-listing-hero-image');
     heroImageWrapper.append(heroImage);
     hero.append(heroImageWrapper);
   } else {
-    hero.classList.add('product-listing-search-hero');
+    hero.classList.add('product-listing-hero-no-image');
+    const heroCopy = createElement('div', 'product-listing-hero-copy');
+    heroCopy.append(
+      createElement('h1', '', category.title),
+      createElement('p', '', category.description),
+    );
+    hero.append(heroCopy);
   }
 
   const layout = createElement('div', 'product-listing-layout');
@@ -415,19 +465,21 @@ function buildPage(category, catalogue) {
 }
 
 export default async function decorate(block) {
-  const sourceLink = [...block.querySelectorAll('a[href]')]
-    .find((link) => new URL(link.href).pathname.toLowerCase().endsWith('.json'));
-  const linkedSheetUrl = sourceLink ? new URL(sourceLink.href) : null;
-  const isHttpSheetUrl = linkedSheetUrl && ['http:', 'https:'].includes(linkedSheetUrl.protocol);
-  const sheetUrl = isHttpSheetUrl
-    ? new URL(`${linkedSheetUrl.pathname}${linkedSheetUrl.search}`, window.location.origin)
-    : null;
-  const assetBaseUrl = isHttpSheetUrl ? new URL('/', linkedSheetUrl) : null;
   const loading = createElement('p', 'product-listing-loading', 'Loading products...');
   loading.setAttribute('role', 'status');
-  block.replaceChildren(loading);
 
   try {
+    const authoredBanners = getAuthoredBanners(block);
+    const sourceLink = [...block.querySelectorAll('a[href]')]
+      .find((link) => new URL(link.href).pathname.toLowerCase().endsWith('.json'));
+    const linkedSheetUrl = sourceLink ? new URL(sourceLink.href) : null;
+    const isHttpSheetUrl = linkedSheetUrl && ['http:', 'https:'].includes(linkedSheetUrl.protocol);
+    const sheetUrl = isHttpSheetUrl
+      ? new URL(`${linkedSheetUrl.pathname}${linkedSheetUrl.search}`, window.location.origin)
+      : null;
+    const assetBaseUrl = isHttpSheetUrl ? new URL('/', linkedSheetUrl) : null;
+    block.replaceChildren(loading);
+
     if (!sheetUrl || !assetBaseUrl) {
       throw new Error('Add a published DA product sheet JSON link to the product-listing block.');
     }
@@ -440,6 +492,12 @@ export default async function decorate(block) {
       throw new Error(`Product listing configuration request failed with status ${catalogueResponse.status}.`);
     }
     const catalogue = await catalogueResponse.json();
+    Object.keys(authoredBanners).forEach((slug) => {
+      if (!catalogue.categories?.[slug]) {
+        reportInvalidBanner(slug, 'no product listing configuration exists for this category.');
+        delete authoredBanners[slug];
+      }
+    });
     const params = new URLSearchParams(window.location.search);
     const searchTerm = (params.get('search') || '').trim();
     if (searchTerm) {
@@ -475,7 +533,11 @@ export default async function decorate(block) {
     }
     const products = sheetProducts.filter((product) => product.categorySlug === categorySlug);
     if (products.length === 0) throw new Error(`The product sheet has no products for "${categorySlug}".`);
-    const category = { ...categoryConfig, products };
+    const category = {
+      ...categoryConfig,
+      banner: authoredBanners[categorySlug],
+      products,
+    };
 
     document.title = `${category.title} | FlipKart`;
     block.replaceChildren(buildPage(category, catalogue));

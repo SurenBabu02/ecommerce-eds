@@ -180,6 +180,60 @@ function createSizeSelector(product, sizes, onSelect) {
   return { fieldset, dialog };
 }
 
+function createRelatedSizeDialog(product, sizes, onConfirm) {
+  sizeSelectorId += 1;
+  const dialog = document.createElement('dialog');
+  dialog.className = 'related-size-dialog';
+  const heading = createElement('h2', '', `Choose a size for ${product.title}`);
+  heading.id = `related-size-title-${sizeSelectorId}`;
+  dialog.setAttribute('aria-labelledby', heading.id);
+
+  const fieldset = createElement('fieldset', 'related-size-options');
+  fieldset.append(createElement('legend', '', 'Select a size'));
+  const options = createElement('div', 'pdp-size-options');
+  const addButton = createElement('button', 'related-size-add', 'Add to Cart');
+  addButton.type = 'button';
+  addButton.disabled = true;
+
+  sizes.forEach((size, index) => {
+    const optionId = `related-size-${sizeSelectorId}-${index}`;
+    const label = createElement('label', 'pdp-size-option');
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = `related-size-${sizeSelectorId}`;
+    input.id = optionId;
+    input.value = size;
+    input.addEventListener('change', () => {
+      addButton.disabled = false;
+    });
+    label.htmlFor = optionId;
+    label.append(input, createElement('span', '', size));
+    options.append(label);
+  });
+  fieldset.append(options);
+
+  const actions = createElement('div', 'related-size-actions');
+  const cancelButton = createElement('button', 'related-size-cancel', 'Cancel');
+  cancelButton.type = 'button';
+  cancelButton.addEventListener('click', () => dialog.close());
+  addButton.addEventListener('click', () => {
+    const selectedSize = fieldset.querySelector('input:checked')?.value;
+    if (!selectedSize) return;
+    dialog.close();
+    onConfirm(selectedSize);
+  });
+  actions.append(cancelButton, addButton);
+  dialog.append(heading, fieldset, actions);
+
+  return {
+    dialog,
+    open: () => {
+      if (!dialog.open) dialog.showModal();
+      fieldset.querySelector('input')?.focus();
+    },
+  };
+}
+
 function addToCart(product, quantity, status, size = '') {
   try {
     addProductToCart({ ...product, size }, quantity);
@@ -201,11 +255,10 @@ function createProductLink(product, imageUrl) {
   const image = document.createElement('img');
   setProductImage(image, imageUrl, product.title);
   image.loading = 'lazy';
-  link.append(
-    image,
-    createElement('h3', 'related-card-title', product.title),
-    createElement('p', 'related-card-price', formatPrice(product.price)),
-  );
+  link.append(image, createElement('h3', 'related-card-title', product.title));
+  const meta = [product.brand, product.category].filter(Boolean).join(' | ');
+  if (meta) link.append(createElement('p', 'related-card-meta', meta));
+  link.append(createElement('p', 'related-card-price', formatPrice(product.price)));
   return link;
 }
 
@@ -420,27 +473,67 @@ function createProductPage(block, product, relatedProducts, assetBaseUrl) {
   const relatedGrid = createElement('div', 'related-grid');
   relatedProducts.forEach((relatedProduct) => {
     const article = createElement('article', 'related-card');
+    const relatedImage = getProductImage(relatedProduct, assetBaseUrl);
     article.append(createProductLink(
       relatedProduct,
-      getProductImage(relatedProduct, assetBaseUrl),
+      relatedImage,
     ));
     const relatedSizes = getProductSizeOptions(relatedProduct);
-    const relatedAddButton = createElement(
-      'button',
-      'related-add-cart',
-      relatedSizes ? 'Select Size' : 'Add to Cart',
-    );
+    const actions = createElement('div', 'related-card-actions');
+    const relatedAddButton = createElement('button', 'related-add-cart', 'Add to Cart');
     relatedAddButton.type = 'button';
     if (relatedSizes) {
-      relatedAddButton.addEventListener('click', () => {
-        const url = new URL('/pages/product-details', window.location.origin);
-        url.searchParams.set('productId', relatedProduct.id);
-        window.location.assign(`${url.pathname}${url.search}`);
+      const sizeDialog = createRelatedSizeDialog(relatedProduct, relatedSizes, (size) => {
+        addToCart(relatedProduct, 1, cartStatus, size);
       });
+      relatedAddButton.addEventListener('click', sizeDialog.open);
+      article.append(sizeDialog.dialog);
     } else {
       relatedAddButton.addEventListener('click', () => addToCart(relatedProduct, 1, cartStatus));
     }
-    article.append(relatedAddButton);
+
+    const relatedWishlist = createElement(
+      'button',
+      'related-wishlist-button',
+      '♡ Add to Wishlist',
+    );
+    relatedWishlist.type = 'button';
+    relatedWishlist.setAttribute('aria-pressed', 'false');
+    const relatedWishlistStatus = createElement('p', 'related-wishlist-status');
+    relatedWishlistStatus.setAttribute('role', 'status');
+    relatedWishlistStatus.setAttribute('aria-live', 'polite');
+    const updateRelatedWishlistButton = (isSaved) => {
+      relatedWishlist.setAttribute('aria-pressed', String(isSaved));
+      relatedWishlist.textContent = isSaved ? '♥ Added to Wishlist' : '♡ Add to Wishlist';
+    };
+    try {
+      updateRelatedWishlistButton(getWishlist().some(
+        (savedProduct) => savedProduct.id === String(relatedProduct.id),
+      ));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Unable to read wishlist.', error);
+      relatedWishlist.disabled = true;
+      relatedWishlistStatus.textContent = 'Wishlist is unavailable right now.';
+    }
+    relatedWishlist.addEventListener('click', () => {
+      try {
+        const isSaved = toggleWishlist({
+          ...relatedProduct,
+          image: relatedImage,
+        });
+        updateRelatedWishlistButton(isSaved);
+        relatedWishlistStatus.textContent = isSaved
+          ? `${relatedProduct.title} saved to your wishlist.`
+          : `${relatedProduct.title} removed from your wishlist.`;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Unable to update wishlist.', error);
+        relatedWishlistStatus.textContent = 'Unable to update your wishlist.';
+      }
+    });
+    actions.append(relatedAddButton, relatedWishlist, relatedWishlistStatus);
+    article.append(actions);
     relatedGrid.append(article);
   });
   relatedSection.append(relatedGrid);
